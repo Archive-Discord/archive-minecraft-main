@@ -1,0 +1,16 @@
+name: Archive_Main
+version: '${project.version}'
+main: kr.archive.main.Main
+api-version: 1.18
+authors: [ Kisss ]
+website: archiver.me
+commands:
+  돈:
+    description: 보유중인 금액을 확인합니다.
+    aliases:
+      - money
+      - ehs
+      - 보유금액
+    usage: /돈
+    permission: archive.money
+    permission-message: "이 명령어를 사용할 권한이 없습니다"
