@@ -1,14 +1,11 @@
 package kr.archive.main.commands;
 import static com.mongodb.client.model.Filters.eq;
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.client.*;
-import com.mongodb.client.model.UpdateOptions;
 import kr.archive.main.Main;
 import kr.archive.main.database.Money;
+import kr.archive.main.database.User;
 import kr.archive.main.utils.MessageFormat;
-import net.md_5.bungee.api.chat.TextComponent;
-import org.bson.BasicBSONObject;
 import org.bson.Document;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -20,6 +17,7 @@ import java.text.NumberFormat;
 
 public class MoneyCommand implements CommandExecutor {
     private final MongoCollection<Money> money = Main.mongoDatabase.getCollection("money", Money.class);
+    private final MongoCollection<User> userData = Main.mongoDatabase.getCollection("userData", User.class);
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
@@ -29,8 +27,13 @@ public class MoneyCommand implements CommandExecutor {
         Player player = (Player) sender;
         Money doc = money.find(eq("minecraftId", player.getUniqueId().toString())).first();
         if (doc == null) {
-            sender.sendMessage(MessageFormat.ErrorMessage("여기를 클릭해 디스코드 연동 후 이용해주세요"));
-            return true;
+            User userDB = userData.find(eq("minecraft_id", player.getUniqueId().toString())).first();
+            if(userDB == null) {
+                sender.sendMessage(MessageFormat.ErrorMessage("여기를 클릭해 디스코드 연동 후 이용해주세요"));
+                return true;
+            }
+            money.updateOne(eq("id", userDB.getId()), eq("minecraftId", userDB.getMinecraft_id()));
+            doc = money.find(eq("minecraftId", player.getUniqueId().toString())).first();
         }
         if (args.length == 0) {
             sender.sendMessage(MessageFormat.SuccessMessage("보유중인 금액 [ " + NumberFormat.getInstance().format(doc.getMoney()) + "원 ]"));
