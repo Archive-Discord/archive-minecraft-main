@@ -7,6 +7,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import kr.archive.main.commands.MoneyCommand;
+import kr.archive.main.commands.ShopCommand;
 import kr.archive.main.database.User;
 import kr.archive.main.events.LoginEvent;
 import kr.archive.main.listener.BlockListener;
@@ -77,6 +78,7 @@ public final class Main extends JavaPlugin {
 
     public void commandLoader() {
         getCommand("돈").setExecutor(new MoneyCommand());
+        getCommand("상점").setExecutor(new ShopCommand());
     }
 
     public void eventLoader() {

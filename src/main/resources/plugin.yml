@@ -14,3 +14,11 @@ commands:
     usage: /돈
     permission: archive.money
     permission-message: "이 명령어를 사용할 권한이 없습니다"
+  상점:
+    description: 상점 명령어를 확인합니다.
+    aliases:
+      - shop
+      - tkdwja
+    usage: /상점
+    permission: archive.shop
+    permission-message: "이 명령어를 사용할 권한이 없습니다"

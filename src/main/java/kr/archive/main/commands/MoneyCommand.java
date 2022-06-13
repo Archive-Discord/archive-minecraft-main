@@ -32,14 +32,13 @@ public class MoneyCommand implements CommandExecutor {
                 sender.sendMessage(MessageFormat.ErrorMessage("여기를 클릭해 디스코드 연동 후 이용해주세요"));
                 return true;
             }
-            money.updateOne(eq("id", userDB.getId()), eq("minecraftId", userDB.getMinecraft_id()));
+            money.updateOne(eq("userid", userDB.getId()), eq("minecraftId", userDB.getMinecraft_id()));
             doc = money.find(eq("minecraftId", player.getUniqueId().toString())).first();
         }
         if (args.length == 0) {
             sender.sendMessage(MessageFormat.SuccessMessage("보유중인 금액 [ " + NumberFormat.getInstance().format(doc.getMoney()) + "원 ]"));
             return true;
         } else if (args.length == 3) {
-            System.out.println(args[0] + args[1] + args[2]);
             if(args[0].equals("송금")) {
                 Player target = Bukkit.getPlayer(args[1]);
                 if(target == null) {
@@ -67,6 +66,7 @@ public class MoneyCommand implements CommandExecutor {
                 money.updateOne(eq("minecraftId", player.getUniqueId().toString()), new Document("$inc", new Document("money", -Integer.parseInt(args[2]))));
                 Money newMoney = money.find(eq("minecraftId", player.getUniqueId().toString())).first();
                 sender.sendMessage(MessageFormat.SuccessMessage(target.getName() + "님에게 성공적으로 " +  NumberFormat.getInstance().format(Integer.parseInt(args[2]))) + "원을 송급했습니다. 송금 후 잔액은 " + NumberFormat.getInstance().format(newMoney.getMoney()) + "원 입니다.");
+                target.sendMessage(MessageFormat.SuccessMessage(target.getName() + "님이" + NumberFormat.getInstance().format(Integer.parseInt(args[2]))) + "원을 송급했습니다.");
                 return true;
             }
         }
