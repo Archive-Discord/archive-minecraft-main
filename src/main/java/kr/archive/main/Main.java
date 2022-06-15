@@ -13,6 +13,7 @@ import kr.archive.main.events.LoginEvent;
 import kr.archive.main.listener.BlockListener;
 import kr.archive.main.listener.EntityListener;
 import kr.archive.main.listener.PlayerListener;
+import kr.archive.main.listener.PlayerShopListener;
 import kr.archive.main.utils.MessageFormat;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -86,6 +87,7 @@ public final class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new BlockListener(), this);
         getServer().getPluginManager().registerEvents(new EntityListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerListener(), this);
+        getServer().getPluginManager().registerEvents(new PlayerShopListener(), this);
     }
 
     public static void LoginUserCheck(MongoDatabase mongoDatabase) {
