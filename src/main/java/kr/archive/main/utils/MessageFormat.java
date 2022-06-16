@@ -1,6 +1,5 @@
 package kr.archive.main.utils;
 
-import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.ChatColor;
 import org.jetbrains.annotations.NotNull;
 

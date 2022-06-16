@@ -14,6 +14,7 @@ import kr.archive.main.listener.BlockListener;
 import kr.archive.main.listener.EntityListener;
 import kr.archive.main.listener.PlayerListener;
 import kr.archive.main.listener.PlayerShopListener;
+import kr.archive.main.tabComplete.ShopComplete;
 import kr.archive.main.utils.MessageFormat;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -43,6 +44,7 @@ public final class Main extends JavaPlugin {
         connectDataBase();
         commandLoader();
         eventLoader();
+        tabCompleterLoader();
     }
 
     @Override
@@ -67,7 +69,6 @@ public final class Main extends JavaPlugin {
                         .codecRegistry(pojoCodecRegistry)
                         .applyConnectionString(new ConnectionString(mongodbURI))
                         .uuidRepresentation(UuidRepresentation.JAVA_LEGACY)
-
                         .build());
         mongoDatabase = mongoClient.getDatabase("battlebot");
         LoginUserCheck(mongoDatabase);
@@ -80,6 +81,10 @@ public final class Main extends JavaPlugin {
     public void commandLoader() {
         getCommand("돈").setExecutor(new MoneyCommand());
         getCommand("상점").setExecutor(new ShopCommand());
+    }
+
+    public void tabCompleterLoader() {
+        Bukkit.getPluginCommand("상점").setTabCompleter(new ShopComplete());
     }
 
     public void eventLoader() {

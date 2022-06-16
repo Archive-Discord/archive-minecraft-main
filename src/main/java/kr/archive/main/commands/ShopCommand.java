@@ -26,7 +26,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.material.MaterialData;
-import org.checkerframework.checker.units.qual.C;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -177,6 +176,7 @@ public class ShopCommand implements CommandExecutor {
                     player.openInventory(chestShop);
                 } else {
                     player.sendMessage(MessageFormat.ErrorMessage("오픈할 상점을 입력해주세요."));
+                    return true;
                 }
                 return true;
             default:
