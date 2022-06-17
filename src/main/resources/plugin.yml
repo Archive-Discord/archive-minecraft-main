@@ -9,16 +9,29 @@ commands:
     description: 보유중인 금액을 확인합니다.
     aliases:
       - money
-      - ehs
       - 보유금액
-    usage: /돈
     permission: archive.money
-    permission-message: "이 명령어를 사용할 권한이 없습니다"
+    usage: /<command>
   상점:
     description: 상점 명령어를 확인합니다.
     aliases:
       - shop
       - tkdwja
-    usage: /상점
-    permission: archive.shop
+    usage: /<command>
     permission-message: "이 명령어를 사용할 권한이 없습니다"
+permissions:
+  상점.목록:
+    description: "상점의 목록을 확인합니다"
+    default: op
+  상점.물품:
+    description: "상점에 물품을 등록 또는 삭제합니다"
+    default: op
+  상점.삭제:
+    description: "상점을 삭제합니다"
+    default: op
+  상점.생성:
+    description: "상점을 생성합니다"
+    default: op
+  상점.줄:
+    description: "상점의 사이즈를 조절합니다"
+    default: op

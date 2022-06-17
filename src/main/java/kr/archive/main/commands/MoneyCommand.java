@@ -6,12 +6,14 @@ import kr.archive.main.Main;
 import kr.archive.main.database.Money;
 import kr.archive.main.database.User;
 import kr.archive.main.utils.MessageFormat;
+import kr.archive.main.utils.MoneyLoader;
 import org.bson.Document;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.NumberFormat;
 
@@ -19,24 +21,14 @@ public class MoneyCommand implements CommandExecutor {
     private final MongoCollection<Money> money = Main.mongoDatabase.getCollection("money", Money.class);
     private final MongoCollection<User> userData = Main.mongoDatabase.getCollection("userData", User.class);
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player)) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
+        if (!(sender instanceof Player player)) {
             sender.sendMessage("이 명령어는 유저만 사용가능합니다");
             return true;
         }
-        Player player = (Player) sender;
-        Money doc = money.find(eq("minecraftId", player.getUniqueId().toString())).first();
-        if (doc == null) {
-            User userDB = userData.find(eq("minecraft_id", player.getUniqueId().toString())).first();
-            if(userDB == null) {
-                sender.sendMessage(MessageFormat.ErrorMessage("여기를 클릭해 디스코드 연동 후 이용해주세요"));
-                return true;
-            }
-            money.updateOne(eq("userid", userDB.getId()), eq("minecraftId", userDB.getMinecraft_id()));
-            doc = money.find(eq("minecraftId", player.getUniqueId().toString())).first();
-        }
+        int moneyUser = MoneyLoader.getUserMoney(player);
         if (args.length == 0) {
-            sender.sendMessage(MessageFormat.SuccessMessage("보유중인 금액 [ " + NumberFormat.getInstance().format(doc.getMoney()) + "원 ]"));
+            sender.sendMessage(MessageFormat.SuccessMessage("보유중인 금액 [ " + NumberFormat.getInstance().format(moneyUser) + "원 ]"));
             return true;
         } else if (args.length == 3) {
             if(args[0].equals("송금")) {
@@ -54,8 +46,8 @@ public class MoneyCommand implements CommandExecutor {
                     sender.sendMessage(MessageFormat.ErrorMessage("송금할 금액은 숫자만 입력가능합니다."));
                     return true;
                 }
-                if(doc.getMoney() < Integer.parseInt(args[2])) {
-                    sender.sendMessage(MessageFormat.ErrorMessage("송금가능한 최대 금액은 " + NumberFormat.getInstance().format(doc.getMoney()) + "원 입니다"));
+                if(moneyUser < Integer.parseInt(args[2])) {
+                    sender.sendMessage(MessageFormat.ErrorMessage("송금가능한 최대 금액은 " + NumberFormat.getInstance().format(moneyUser) + "원 입니다"));
                     return true;
                 }
                 if(Integer.parseInt(args[2]) < 100) {

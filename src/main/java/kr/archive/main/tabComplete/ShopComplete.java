@@ -15,6 +15,8 @@ import java.util.Locale;
 public class ShopComplete implements TabCompleter {
     List<String> arguments = new ArrayList<String>();
     List<String> shopArguments = new ArrayList<String>();
+    List<String> makeArguments = new ArrayList<String>();
+    List<String> itemArguments = new ArrayList<String>();
     private final MongoCollection<Shop> ShopData = Main.mongoDatabase.getCollection("minecraftShopData", Shop.class);
 
     @Override
@@ -23,17 +25,32 @@ public class ShopComplete implements TabCompleter {
             arguments.add("생성");
             arguments.add("삭제");
             arguments.add("목록");
+            arguments.add("줄");
             arguments.add("물품");
             arguments.add("열기");
             return arguments;
         } else if(arg[0].equals("열기")) {
-            MongoCursor<Shop> shopList = ShopData.find().iterator();
-            while (shopList.hasNext()) {
-                shopArguments.add(shopList.next().getName());
+            for (Shop shop : ShopData.find()) {
+                shopArguments.add(shop.getName());
             }
             return shopArguments;
-        } else {
-            return arguments;
+        } else if(arg[0].equals("줄")) {
+            for (Shop shop : ShopData.find()) {
+                shopArguments.add(shop.getName());
+            }
+            return shopArguments;
+        } else if (arg[0].equals("생성")) {
+            return null;
+        } else if (arg[0].equals("삭제")) {
+            for (Shop shop : ShopData.find()) {
+                shopArguments.add(shop.getName());
+            }
+            return shopArguments;
+        } else if (arg[0].equals("물품")) {
+            itemArguments.add("등록");
+            itemArguments.add("삭제");
+            return itemArguments;
         }
+        return arguments;
     }
 }

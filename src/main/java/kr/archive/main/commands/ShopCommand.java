@@ -11,6 +11,7 @@ import kr.archive.main.database.Shop;
 import kr.archive.main.database.ShopItem;
 import kr.archive.main.database.User;
 import kr.archive.main.utils.MessageFormat;
+import kr.archive.main.utils.MoneyLoader;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.translation.TranslationRegistry;
 import org.bson.Document;
@@ -26,6 +27,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.material.MaterialData;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -40,14 +42,12 @@ public class ShopCommand implements CommandExecutor {
     private final MongoCollection<User> userData = Main.mongoDatabase.getCollection("userData", User.class);
     private final MongoCollection<Shop> ShopData = Main.mongoDatabase.getCollection("minecraftShopData", Shop.class);
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player)) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
+        if (!(sender instanceof Player player)) {
             sender.sendMessage("이 명령어는 유저만 사용가능합니다");
             return true;
         }
-        Player player = (Player) sender;
         if (args.length < 1) {
-            player.sendMessage(MessageFormat.SuccessMessage(""));
             player.sendMessage(MessageFormat.SuccessMessage("/상점 생성 [이름] - 새로운 상점을 생성합니다."));
             player.sendMessage(MessageFormat.SuccessMessage("/상점 삭제 [이름] - 생성된 상점을 삭제합니다."));
             player.sendMessage(MessageFormat.SuccessMessage("/상점 목록 - 생성된 상점의 목록을 불러옵니다."));
@@ -55,11 +55,14 @@ public class ShopCommand implements CommandExecutor {
             player.sendMessage(MessageFormat.SuccessMessage("/상점 물품 등록 [이름] [슬롯] [구매가] [판매가] - 생성된 상점에 아이템을 등록합니다."));
             player.sendMessage(MessageFormat.SuccessMessage("/상점 물품 삭제 [이름] [슬롯] - 등록한 아이템을 삭제합니다."));
             player.sendMessage(MessageFormat.SuccessMessage("/상점 열기 [이름] - 생성된 상점을 이용합니다."));
-            player.sendMessage(MessageFormat.SuccessMessage(""));
             return true;
         }
         switch (args[0]) {
-            case "생성": {
+            case "생성" -> {
+                if(!player.hasPermission("archive.shop.manage")) {
+                    player.sendMessage(MessageFormat.ErrorMessage("해당 명령어를 사용할 권한이 없습니다"));
+                    return true;
+                }
                 if (args[1] == null) {
                     player.sendMessage(MessageFormat.SuccessMessage("/상점 생성 [이름] - 새로운 상점을 생성합니다."));
                     return true;
@@ -74,7 +77,11 @@ public class ShopCommand implements CommandExecutor {
                 player.sendMessage(MessageFormat.SuccessMessage(args[1] + " 상점은 이미 생성되어 있습니다. &a[/상점 목록]"));
                 return true;
             }
-            case "삭제": {
+            case "삭제" -> {
+                if(!player.hasPermission("archive.shop.manage")) {
+                    player.sendMessage(MessageFormat.ErrorMessage("해당 명령어를 사용할 권한이 없습니다"));
+                    return true;
+                }
                 if (args[1] == null) {
                     player.sendMessage(MessageFormat.SuccessMessage("/상점 삭제 [이름] - 생성된 상점을 삭제합니다."));
                     return true;
@@ -88,7 +95,11 @@ public class ShopCommand implements CommandExecutor {
                 player.sendMessage(MessageFormat.SuccessMessage(args[1] + " 상점을 삭제하였습니다."));
                 return true;
             }
-            case "목록": {
+            case "목록" -> {
+                if(!player.hasPermission("archive.shop.manage")) {
+                    player.sendMessage(MessageFormat.ErrorMessage("해당 명령어를 사용할 권한이 없습니다"));
+                    return true;
+                }
                 MongoCursor<Shop> shop = ShopData.find().iterator();
                 long shopSize = ShopData.countDocuments();
                 if (shopSize <= 0) {
@@ -102,7 +113,11 @@ public class ShopCommand implements CommandExecutor {
                 player.sendMessage(ChatColor.GRAY + "──────────────────────");
                 return true;
             }
-            case "물품":
+            case "물품" -> {
+                if(!player.hasPermission("archive.shop.manage")) {
+                    player.sendMessage(MessageFormat.ErrorMessage("해당 명령어를 사용할 권한이 없습니다"));
+                    return true;
+                }
                 if (args[1] == null) {
                     player.sendMessage(MessageFormat.SuccessMessage("/상점 물품 등록 [이름] [슬롯] [구매가] [판매가] - 생성된 상점에 아이템을 등록합니다."));
                     player.sendMessage(MessageFormat.SuccessMessage("/상점 물품 삭제 [이름] [슬롯] - 등록한 아이템을 삭제합니다."));
@@ -113,57 +128,57 @@ public class ShopCommand implements CommandExecutor {
                         player.sendMessage(MessageFormat.SuccessMessage("/상점 물품 등록 [이름] [슬롯] [구매가] [판매가] - 생성된 상점에 아이템을 등록합니다."));
                         return true;
                     }
-                    if (args[2] != null) {
-                        if (args[3].matches("-?\\d+")) {
-                            if (args[4].matches("-?\\d+")) {
-                                if (args[5].matches("-?\\d+")) {
-                                    ItemStack item = player.getInventory().getItemInMainHand();
-                                    if (item.getType() != Material.AIR) {
-                                        Shop shop = ShopData.find(eq("name", args[2])).first();
-                                        if (shop == null) {
-                                            player.sendMessage(MessageFormat.ErrorMessage(args[2] + " 상점은 생성되어 있지 않습니다. [/상점 생성]"));
-                                            return true;
-                                        }
-                                        ShopData.updateOne(eq("name", args[2]), new Document("$push", new Document("items", new Document("row", Integer.parseInt(args[3])).append("item", item.getType()).append("buy", Integer.parseInt(args[4])).append("sell", Integer.parseInt(args[5])))));
-                                        player.sendMessage(MessageFormat.SuccessMessage(args[2] + " 상점에 " + item.getType().name() + "가 " + "구매가" + Integer.parseInt(args[4]) + "원, 판매가" + Integer.parseInt(args[5]) + "원 으로 추가가 완료되었습니다"));
-                                        return true;
-                                    } else {
-                                        player.sendMessage(MessageFormat.ErrorMessage("상점에 등록할 아이템을 들고 입력해주시기 바랍니다."));
-                                        return true;
-                                    }
-                                } else {
-                                    player.sendMessage(MessageFormat.ErrorMessage("상점의 판매가는 숫자만 입력해주시기 바랍니다."));
-                                    return true;
-                                }
-                            } else {
-                                player.sendMessage(MessageFormat.ErrorMessage("상점의 구매가는 숫자만 입력해주시기 바랍니다."));
-                                return true;
-                            }
-                        } else {
-                            player.sendMessage(MessageFormat.ErrorMessage("상점의 슬롯은 숫자만 입력해주시기 바랍니다."));
-                            return true;
-                        }
-                    } else {
+                    if(args[2] == null) {
                         player.sendMessage(MessageFormat.SuccessMessage("/상점 물품 등록 [이름] [슬롯] [구매가] [판매가] - 생성된 상점에 아이템을 등록합니다."));
                         return true;
                     }
+                    if (args[3].matches("-?\\d+")) {
+                        if (args[4].matches("-?\\d+")) {
+                            if (args[5].matches("-?\\d+")) {
+                                ItemStack item = player.getInventory().getItemInMainHand();
+                                if (item.getType() != Material.AIR) {
+                                    Shop shop = ShopData.find(eq("name", args[2])).first();
+                                    if (shop == null) {
+                                        player.sendMessage(MessageFormat.ErrorMessage(args[2] + " 상점은 생성되어 있지 않습니다. [/상점 생성]"));
+                                        return true;
+                                    }
+                                    ShopData.updateOne(eq("name", args[2]), new Document("$push", new Document("items", new Document("row", Integer.parseInt(args[3])).append("item", item.getType()).append("buy", Integer.parseInt(args[4])).append("sell", Integer.parseInt(args[5])))));
+                                    player.sendMessage(MessageFormat.SuccessMessage(args[2] + " 상점에 " + item.getType().name() + "가 " + "구매가" + Integer.parseInt(args[4]) + "원, 판매가" + Integer.parseInt(args[5]) + "원 으로 추가가 완료되었습니다"));
+                                } else {
+                                    player.sendMessage(MessageFormat.ErrorMessage("상점에 등록할 아이템을 들고 입력해주시기 바랍니다."));
+                                }
+                            } else {
+                                player.sendMessage(MessageFormat.ErrorMessage("상점의 판매가는 숫자만 입력해주시기 바랍니다."));
+                            }
+                        } else {
+                            player.sendMessage(MessageFormat.ErrorMessage("상점의 구매가는 숫자만 입력해주시기 바랍니다."));
+                        }
+                    } else {
+                        player.sendMessage(MessageFormat.ErrorMessage("상점의 슬롯은 숫자만 입력해주시기 바랍니다."));
+                    }
+                    return true;
                 }
-                break;
-            case "열기":
+            }
+            case "열기" -> {
                 if (args[1] != null) {
                     Shop shop = ShopData.find(eq("name", args[1])).first();
                     if (shop == null) {
                         player.sendMessage(MessageFormat.ErrorMessage("찾을 수 없는 상점입니다"));
                         return true;
                     }
-                    Inventory chestShop = Bukkit.createInventory(player, 27, "§8§l[SHOP] §8"+ shop.getName() + "아카이브 상점");
+                    Inventory chestShop = Bukkit.createInventory(player, shop.getCol() * 9, "§8§l[SHOP] §8" + shop.getName() + "아카이브 상점");
+                    if(shop.getItems() == null || shop.getItems().isEmpty()) {
+                        player.sendMessage(MessageFormat.ErrorMessage(shop.getName()+ "상점에 등록된 아이템이 없습니다"));
+                        return true;
+                    }
+                    chestShop.setItem(shop.getCol() * 9 - 5, MoneyLoader.MoneyItemLoader(player));
                     for (ShopItem shopItem : shop.getItems()) {
                         ItemStack item = new ItemStack(shopItem.getItem());
                         ItemMeta meta = item.getItemMeta();
                         List<String> lore = new ArrayList<>();
                         lore.add(ChatColor.WHITE + " ");
                         lore.add("" + ChatColor.DARK_GRAY + ChatColor.BOLD + "> " + ChatColor.WHITE + "아이템 구매가: " + (shopItem.getBuy() == 0 ? ChatColor.RED + "구매불가" : ChatColor.GREEN + Integer.toString(shopItem.getBuy()) + "원"));
-                        lore.add("" + ChatColor.DARK_GRAY + ChatColor.BOLD + "> " + ChatColor.WHITE + "아이탬 판매가: " + (shopItem.getBuy() == 0 ? ChatColor.RED + "판매불가" : ChatColor.GREEN + Integer.toString(shopItem.getSell()) + "원"));
+                        lore.add("" + ChatColor.DARK_GRAY + ChatColor.BOLD + "> " + ChatColor.WHITE + "아이탬 판매가: " + (shopItem.getSell() == 0 ? ChatColor.RED + "판매불가" : ChatColor.GREEN + Integer.toString(shopItem.getSell()) + "원"));
                         lore.add("" + ChatColor.GOLD + ChatColor.BOLD + "> " + ChatColor.WHITE + "좌클릭 시 아이템을 구매합니다");
                         lore.add("" + ChatColor.GOLD + ChatColor.BOLD + "  └ " + ChatColor.WHITE + "쉬프트 + 좌클릭 시 아이템 64개를 구매합니다.");
                         lore.add("" + ChatColor.GOLD + ChatColor.BOLD + "> " + ChatColor.WHITE + "우클릭 시 아이템을 판매합니다.");
@@ -179,9 +194,33 @@ public class ShopCommand implements CommandExecutor {
                     return true;
                 }
                 return true;
-            default:
+            }
+            case "줄" -> {
+                if(!player.hasPermission("archive.shop.manage")) {
+                    player.sendMessage(MessageFormat.ErrorMessage("해당 명령어를 사용할 권한이 없습니다"));
+                    return true;
+                }
+                if (args[1] == null) {
+                    player.sendMessage(MessageFormat.SuccessMessage("/상점 줄 [이름] [1~6]"));
+                    return true;
+                }
+                Shop shop = ShopData.find(eq("name", args[1])).first();
+                if(shop == null) {
+                    player.sendMessage(MessageFormat.SuccessMessage(args[1] + " 상점을 찾을 수 없습니다. §a[/상점 목록]"));
+                    return true;
+                }
+                if(!args[2].matches("-?\\d+")) {
+                    sender.sendMessage(MessageFormat.ErrorMessage("/상점 줄 [이름] [1~6] - [1~6]까지의 숫자만 입력가능합니다."));
+                    return true;
+                }
+                ShopData.updateOne(eq("name", args[1]), new Document("$set", new Document("col", Integer.parseInt(args[2]))));
+                sender.sendMessage(MessageFormat.SuccessMessage(args[1] + "상점이 " + args[2] + "줄로 설정되었습니다."));
+                return true;
+            }
+            default -> {
                 player.sendMessage(MessageFormat.ErrorMessage("올바르지 않은 명령어 사용법입니다."));
                 return true;
+            }
         }
         return true;
     }
